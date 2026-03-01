@@ -1,0 +1,1387 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Питчли — ИИ-анализ бизнес-идей за 60 секунд</title>
+<meta name="description" content="Опиши идею — получи оценку, питч, анализ конкурентов и PDF за 60 секунд.">
+<link rel="icon" type="image/png" href="/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;700;900&family=Onest:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root {
+  --bg: #03060f;
+  --surface: #080e1c;
+  --surface2: #0c1525;
+  --border: rgba(255,255,255,0.06);
+  --border2: rgba(255,255,255,0.1);
+  --text: #f0f4ff;
+  --text2: #8899bb;
+  --text3: #4a5a7a;
+  --accent: #4f8bff;
+  --accent2: #00d4aa;
+  --accent3: #ff6b35;
+  --gold: #ffd166;
+  --red: #ff4757;
+  --glow: 0 0 40px rgba(79,139,255,0.15);
+  --glow2: 0 0 60px rgba(0,212,170,0.1);
+  --r: 16px;
+  --r2: 12px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:'Onest',sans-serif;
+  min-height:100vh;
+  overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ── ФОНОВАЯ СЕТКА ── */
+body::before{
+  content:'';
+  position:fixed;inset:0;
+  background-image:
+    linear-gradient(rgba(79,139,255,0.03) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(79,139,255,0.03) 1px,transparent 1px);
+  background-size:60px 60px;
+  pointer-events:none;z-index:0;
+}
+body::after{
+  content:'';
+  position:fixed;
+  top:-300px;left:50%;transform:translateX(-50%);
+  width:800px;height:600px;
+  background:radial-gradient(ellipse,rgba(79,139,255,0.08) 0%,transparent 70%);
+  pointer-events:none;z-index:0;
+}
+
+/* ── ХЕДЕР ── */
+header{
+  position:sticky;top:0;z-index:100;
+  background:rgba(3,6,15,0.8);
+  backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);
+  padding:0 48px;height:64px;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.logo{
+  display:flex;align-items:center;gap:10px;
+  font-family:'Unbounded',sans-serif;
+  font-size:18px;font-weight:700;
+  color:var(--text);letter-spacing:-.5px;
+  text-decoration:none;
+}
+.logo-icon{
+  width:34px;height:34px;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  border-radius:9px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:16px;
+}
+.header-right{display:flex;align-items:center;gap:12px}
+.lang-toggle{
+  display:flex;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:8px;padding:3px;gap:2px;
+}
+.lang-btn{
+  padding:5px 14px;border-radius:6px;border:none;
+  background:transparent;color:var(--text3);
+  font-family:'Onest',sans-serif;font-size:13px;font-weight:500;
+  cursor:pointer;transition:all .2s;
+}
+.lang-btn.active{background:var(--accent);color:white}
+.header-stat{
+  font-size:12px;color:var(--text3);
+  display:flex;align-items:center;gap:6px;
+}
+.stat-dot{
+  width:6px;height:6px;
+  background:var(--accent2);
+  border-radius:50%;
+  animation:pulse 2s infinite;
+}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
+
+/* ── HERO ── */
+.hero{
+  max-width:800px;margin:0 auto;
+  padding:80px 24px 56px;
+  text-align:center;
+  position:relative;z-index:1;
+}
+.hero-badge{
+  display:inline-flex;align-items:center;gap:8px;
+  background:rgba(79,139,255,0.08);
+  border:1px solid rgba(79,139,255,0.2);
+  border-radius:100px;padding:7px 18px;
+  font-size:12px;font-weight:500;color:var(--accent);
+  margin-bottom:32px;letter-spacing:.3px;
+}
+.hero h1{
+  font-family:'Unbounded',sans-serif;
+  font-size:clamp(32px,5vw,58px);
+  font-weight:900;line-height:1.08;
+  letter-spacing:-2px;
+  color:var(--text);
+  margin-bottom:20px;
+}
+.hero h1 em{
+  font-style:normal;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+.hero-sub{
+  font-size:17px;color:var(--text2);
+  line-height:1.7;max-width:520px;margin:0 auto;
+}
+
+/* ── ТАБ НАВИГАЦИЯ ── */
+.tabs{
+  display:flex;justify-content:center;gap:4px;
+  margin:40px 0 0;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:12px;padding:4px;
+  width:fit-content;margin:40px auto 0;
+}
+.tab-btn{
+  padding:10px 20px;border-radius:9px;border:none;
+  background:transparent;color:var(--text2);
+  font-family:'Onest',sans-serif;font-size:14px;font-weight:500;
+  cursor:pointer;transition:all .2s;white-space:nowrap;
+}
+.tab-btn.active{
+  background:var(--accent);color:white;
+  box-shadow:0 2px 12px rgba(79,139,255,0.3);
+}
+
+/* ── MAIN WRAP ── */
+.main-wrap{
+  max-width:780px;margin:40px auto 80px;
+  padding:0 24px;
+  position:relative;z-index:1;
+}
+
+/* ── КАРТОЧКА ── */
+.card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--r);
+  overflow:hidden;
+  box-shadow:var(--glow);
+}
+.card-top{
+  background:var(--surface2);
+  padding:14px 20px;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.dots{display:flex;gap:7px}
+.dot{width:12px;height:12px;border-radius:50%}
+.dot-r{background:#ff5f57}.dot-y{background:#ffbd2e}.dot-g{background:#28ca41}
+.card-label{font-size:12px;color:var(--text3);font-weight:500}
+.card-body{padding:28px}
+
+/* ── INPUT ── */
+.input-label{font-size:13px;font-weight:600;color:var(--text2);margin-bottom:10px;letter-spacing:.3px}
+textarea{
+  width:100%;min-height:130px;
+  background:var(--bg);
+  border:1px solid var(--border2);
+  border-radius:var(--r2);
+  color:var(--text);
+  font-family:'Onest',sans-serif;font-size:15px;line-height:1.7;
+  padding:16px 18px;resize:none;outline:none;
+  transition:border-color .2s,background .2s;
+}
+textarea:focus{border-color:var(--accent);background:#050a14}
+textarea::placeholder{color:var(--text3)}
+.input-meta{
+  display:flex;justify-content:space-between;
+  margin:8px 0 16px;
+  font-size:12px;color:var(--text3);
+}
+.free-left-badge{
+  background:rgba(79,139,255,0.1);
+  border:1px solid rgba(79,139,255,0.2);
+  border-radius:6px;padding:2px 10px;
+  font-size:12px;color:var(--accent);font-weight:600;
+}
+
+/* ── КНОПКА АНАЛИЗА ── */
+.analyze-btn{
+  width:100%;padding:16px;
+  background:linear-gradient(135deg,var(--accent),#3366cc);
+  border:none;border-radius:var(--r2);
+  color:white;font-family:'Unbounded',sans-serif;
+  font-size:14px;font-weight:700;letter-spacing:-.3px;
+  cursor:pointer;transition:all .2s;
+  position:relative;overflow:hidden;
+}
+.analyze-btn::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,transparent,rgba(255,255,255,0.1),transparent);
+  transform:translateX(-100%);transition:transform .4s;
+}
+.analyze-btn:hover::before{transform:translateX(100%)}
+.analyze-btn:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(79,139,255,0.4)}
+.analyze-btn:active{transform:translateY(0)}
+
+/* ── ВТОРОЙ ТАБ — СРАВНЕНИЕ ── */
+.compare-section{display:none}
+.compare-section.active{display:block}
+.compare-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.compare-label{font-size:12px;font-weight:600;color:var(--text2);margin-bottom:8px;letter-spacing:.3px}
+.compare-btn{
+  width:100%;padding:14px;
+  background:linear-gradient(135deg,rgba(79,139,255,0.15),rgba(0,212,170,0.1));
+  border:1px solid rgba(79,139,255,0.3);
+  border-radius:var(--r2);color:var(--accent);
+  font-family:'Unbounded',sans-serif;font-size:13px;font-weight:700;
+  cursor:pointer;transition:all .2s;
+}
+.compare-btn:hover{background:linear-gradient(135deg,rgba(79,139,255,0.25),rgba(0,212,170,0.15));transform:translateY(-1px)}
+
+/* ── ЗАГРУЗКА ── */
+.loading{display:none;padding:48px 28px;text-align:center}
+.loading.show{display:block}
+.loader{
+  width:48px;height:48px;margin:0 auto 24px;
+  border:2px solid var(--border2);
+  border-top-color:var(--accent);
+  border-radius:50%;
+  animation:spin .8s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-title{font-family:'Unbounded',sans-serif;font-size:15px;font-weight:700;color:var(--text);margin-bottom:8px}
+.loading-sub{font-size:13px;color:var(--text3);margin-bottom:24px}
+.steps-list{display:flex;flex-direction:column;gap:8px;max-width:300px;margin:0 auto}
+.step-item{
+  display:flex;align-items:center;gap:10px;
+  font-size:13px;color:var(--text3);
+  padding:8px 14px;border-radius:8px;
+  transition:all .3s;
+}
+.step-item.active{
+  color:var(--accent);background:rgba(79,139,255,0.08);
+  border:1px solid rgba(79,139,255,0.15);
+}
+.step-dot{width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0}
+
+/* ── PAYWALL ── */
+.paywall{display:none;padding:32px 24px;text-align:center}
+.paywall.show{display:block}
+.paywall-icon{font-size:40px;margin-bottom:16px}
+.paywall-title{
+  font-family:'Unbounded',sans-serif;
+  font-size:20px;font-weight:900;
+  color:var(--text);margin-bottom:8px;
+}
+.paywall-sub{font-size:14px;color:var(--text2);line-height:1.6;margin-bottom:28px}
+.plans-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+.plan{
+  background:var(--surface2);
+  border:1px solid var(--border);
+  border-radius:var(--r2);padding:20px 16px;
+  text-align:left;cursor:pointer;
+  transition:all .2s;position:relative;
+}
+.plan:hover{border-color:var(--accent);transform:translateY(-2px)}
+.plan.featured{border-color:rgba(79,139,255,0.4);background:rgba(79,139,255,0.05)}
+.plan-tag{
+  position:absolute;top:-10px;left:50%;transform:translateX(-50%);
+  background:var(--accent);color:white;
+  font-size:10px;font-weight:700;letter-spacing:.5px;
+  border-radius:6px;padding:3px 10px;white-space:nowrap;
+}
+.plan-name{font-size:13px;font-weight:600;color:var(--text2);margin-bottom:6px}
+.plan-price{
+  font-family:'Unbounded',sans-serif;
+  font-size:24px;font-weight:900;color:var(--accent);
+  letter-spacing:-1px;margin-bottom:4px;
+}
+.plan-price span{font-size:13px;font-weight:400;color:var(--text3)}
+.plan-desc{font-size:12px;color:var(--text3);line-height:1.5;margin-bottom:14px}
+.plan-cta{
+  width:100%;padding:10px;border-radius:8px;
+  font-family:'Onest',sans-serif;font-size:13px;font-weight:600;
+  cursor:pointer;transition:all .2s;border:none;
+}
+.plan-cta-primary{background:var(--accent);color:white}
+.plan-cta-secondary{background:transparent;color:var(--accent);border:1px solid var(--accent)}
+.paywall-note{font-size:11px;color:var(--text3)}
+
+/* ── РЕЗУЛЬТАТ ── */
+.result{display:none}
+.result.show{display:block;animation:fadeUp .4s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+
+/* Мета блок */
+.result-meta{
+  display:flex;align-items:center;gap:10px;
+  margin-bottom:20px;flex-wrap:wrap;
+}
+.result-id{
+  font-size:11px;font-weight:700;letter-spacing:1.5px;
+  color:var(--text3);background:var(--surface2);
+  border:1px solid var(--border);
+  border-radius:6px;padding:4px 10px;
+}
+.idea-type{
+  display:inline-flex;align-items:center;gap:6px;
+  font-size:12px;font-weight:700;
+  border-radius:20px;padding:4px 12px;letter-spacing:.3px;
+}
+.type-v{background:rgba(139,92,246,0.15);border:1px solid rgba(139,92,246,0.3);color:#a78bfa}
+.type-s{background:rgba(0,212,170,0.1);border:1px solid rgba(0,212,170,0.25);color:#00d4aa}
+.type-b{background:rgba(79,139,255,0.1);border:1px solid rgba(79,139,255,0.25);color:#4f8bff}
+.type-d{background:rgba(255,107,53,0.1);border:1px solid rgba(255,107,53,0.25);color:#ff6b35}
+
+/* Скоры */
+.scores-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+.score-card{
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:var(--r2);padding:20px;
+  position:relative;overflow:hidden;
+}
+.score-card::after{
+  content:'';position:absolute;bottom:0;left:0;right:0;height:2px;
+}
+.score-card.rel::after{background:linear-gradient(90deg,var(--accent),transparent)}
+.score-card.mon::after{background:linear-gradient(90deg,var(--accent2),transparent)}
+.score-label{
+  font-size:10px;font-weight:700;letter-spacing:1.5px;
+  color:var(--text3);text-transform:uppercase;margin-bottom:8px;
+}
+.score-num{
+  font-family:'Unbounded',sans-serif;
+  font-size:52px;font-weight:900;line-height:1;
+  letter-spacing:-3px;margin-bottom:6px;
+}
+.score-card.rel .score-num{color:var(--accent)}
+.score-card.mon .score-num{color:var(--accent2)}
+.score-verdict{font-size:12px;color:var(--text3);line-height:1.5}
+
+/* Секции */
+.section{
+  border:1px solid var(--border);
+  border-radius:var(--r2);padding:20px;
+  margin-bottom:12px;
+  background:var(--surface2);
+}
+.section-header{
+  display:flex;align-items:center;gap:8px;
+  margin-bottom:14px;
+}
+.section-icon{font-size:14px}
+.section-title{
+  font-size:11px;font-weight:700;letter-spacing:1.5px;
+  text-transform:uppercase;color:var(--text3);
+}
+.section-text{font-size:14px;color:var(--text2);line-height:1.8}
+
+/* Слайды */
+.slides-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.slide{
+  background:var(--bg);border-radius:10px;
+  padding:14px;border:1px solid var(--border);
+}
+.slide-num{
+  font-size:10px;font-weight:700;color:var(--accent);
+  letter-spacing:1px;margin-bottom:4px;
+}
+.slide-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px}
+.slide-text{font-size:12px;color:var(--text3);line-height:1.5}
+
+/* Ниши и юридика */
+.tags-list{display:flex;flex-wrap:wrap;gap:8px}
+.tag{
+  font-size:12px;color:var(--text2);
+  background:var(--bg);border:1px solid var(--border);
+  border-radius:6px;padding:5px 12px;
+}
+.legal-list{display:flex;flex-direction:column;gap:8px}
+.legal-item{
+  display:flex;align-items:flex-start;gap:8px;
+  font-size:13px;color:var(--text2);line-height:1.5;
+}
+.legal-icon{font-size:13px;flex-shrink:0;margin-top:1px}
+
+/* Улучшение идеи */
+.upgrade-section{
+  background:rgba(255,107,53,0.05);
+  border:1px solid rgba(255,107,53,0.2);
+  border-radius:var(--r2);padding:20px;
+  margin-bottom:12px;display:none;
+}
+.upgrade-section.show{display:block}
+.upgrade-title{
+  font-size:13px;font-weight:700;color:var(--accent3);
+  margin-bottom:8px;
+}
+.upgrade-text{font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:14px}
+.better-box{
+  background:rgba(255,107,53,0.08);
+  border-radius:8px;padding:14px;
+}
+.better-label{
+  font-size:10px;font-weight:700;letter-spacing:1.5px;
+  color:var(--accent3);margin-bottom:6px;
+}
+.better-text{font-size:13px;color:var(--text);line-height:1.6;font-weight:500}
+
+/* Блок конкурентов */
+.competitors-section{
+  background:rgba(0,212,170,0.03);
+  border:1px solid rgba(0,212,170,0.15);
+  border-radius:var(--r2);padding:20px;
+  margin-bottom:12px;
+}
+.comp-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:12px}
+.comp-card{
+  background:var(--bg);border:1px solid var(--border);
+  border-radius:8px;padding:12px;
+}
+.comp-name{font-size:12px;font-weight:700;color:var(--accent2);margin-bottom:4px}
+.comp-desc{font-size:11px;color:var(--text3);line-height:1.4}
+
+/* История */
+.history-section{
+  margin-top:40px;
+}
+.history-title{
+  font-family:'Unbounded',sans-serif;
+  font-size:14px;font-weight:700;color:var(--text);
+  margin-bottom:16px;
+}
+.history-empty{
+  text-align:center;padding:40px;
+  color:var(--text3);font-size:14px;
+  border:1px dashed var(--border);border-radius:var(--r2);
+}
+.history-list{display:flex;flex-direction:column;gap:10px}
+.history-item{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r2);padding:16px 20px;
+  cursor:pointer;transition:all .2s;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.history-item:hover{border-color:var(--accent);background:rgba(79,139,255,0.05)}
+.history-idea{font-size:14px;color:var(--text);font-weight:500;margin-bottom:4px}
+.history-meta{font-size:12px;color:var(--text3);display:flex;gap:12px}
+.history-scores{display:flex;gap:8px}
+.h-score{
+  font-size:12px;font-weight:700;
+  padding:2px 8px;border-radius:5px;
+}
+.h-score.rel{background:rgba(79,139,255,0.1);color:var(--accent)}
+.h-score.mon{background:rgba(0,212,170,0.1);color:var(--accent2)}
+
+/* Действия */
+.actions-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
+.btn-pdf{
+  padding:13px;background:var(--accent);border:none;
+  border-radius:var(--r2);color:white;
+  font-family:'Onest',sans-serif;font-size:14px;font-weight:600;
+  cursor:pointer;transition:all .2s;
+  display:flex;align-items:center;justify-content:center;gap:6px;
+}
+.btn-pdf:hover{background:#3a70cc;transform:translateY(-1px)}
+.btn-share{
+  padding:13px;background:transparent;
+  border:1px solid var(--border2);border-radius:var(--r2);
+  color:var(--text);font-family:'Onest',sans-serif;
+  font-size:14px;font-weight:600;cursor:pointer;
+  transition:all .2s;display:flex;align-items:center;justify-content:center;gap:6px;
+}
+.btn-share:hover{border-color:var(--accent);color:var(--accent)}
+.btn-restart{
+  width:100%;padding:12px;margin-top:10px;
+  background:transparent;border:1px solid var(--border);
+  border-radius:var(--r2);color:var(--text3);
+  font-family:'Onest',sans-serif;font-size:14px;
+  cursor:pointer;transition:all .2s;
+}
+.btn-restart:hover{border-color:var(--border2);color:var(--text2)}
+
+/* Сравнение результат */
+.compare-result{display:none}
+.compare-result.show{display:block;animation:fadeUp .4s ease}
+.compare-header{
+  display:flex;align-items:center;justify-content:center;gap:16px;
+  margin-bottom:24px;
+}
+.vs-badge{
+  font-family:'Unbounded',sans-serif;
+  font-size:12px;font-weight:900;color:var(--text3);
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:8px;padding:6px 14px;
+}
+.compare-cards{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.compare-card{
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:var(--r2);padding:20px;
+}
+.compare-card.winner{border-color:var(--accent2);background:rgba(0,212,170,0.05)}
+.winner-badge{
+  display:inline-flex;align-items:center;gap:4px;
+  background:rgba(0,212,170,0.15);color:var(--accent2);
+  font-size:11px;font-weight:700;border-radius:5px;
+  padding:3px 8px;margin-bottom:12px;
+}
+.compare-idea-title{font-size:13px;font-weight:600;color:var(--text2);margin-bottom:12px}
+.compare-score-row{display:flex;gap:8px;margin-bottom:8px}
+.c-score-card{
+  flex:1;background:var(--bg);border-radius:8px;padding:10px;text-align:center;
+}
+.c-score-label{font-size:10px;color:var(--text3);letter-spacing:.5px;margin-bottom:4px}
+.c-score-val{
+  font-family:'Unbounded',sans-serif;
+  font-size:22px;font-weight:900;
+}
+.c-pitch{font-size:12px;color:var(--text3);line-height:1.6}
+
+/* Модал */
+.modal-overlay{
+  display:none;position:fixed;inset:0;
+  background:rgba(0,0,0,.6);z-index:1000;
+  align-items:center;justify-content:center;
+  backdrop-filter:blur(4px);
+}
+.modal-overlay.show{display:flex}
+.modal{
+  background:var(--surface);border:1px solid var(--border2);
+  border-radius:20px;padding:32px;
+  max-width:480px;width:90%;max-height:80vh;overflow-y:auto;
+}
+.modal-title{
+  font-family:'Unbounded',sans-serif;
+  font-size:16px;font-weight:700;color:var(--text);margin-bottom:16px;
+}
+.modal-text{font-size:14px;color:var(--text2);line-height:1.8}
+.modal-close{
+  margin-top:24px;width:100%;padding:12px;
+  background:var(--accent);border:none;border-radius:10px;
+  color:white;font-size:14px;font-weight:600;
+  cursor:pointer;font-family:'Onest',sans-serif;
+}
+
+/* Секция КАК РАБОТАЕТ */
+.how-section{
+  max-width:780px;margin:0 auto 80px;padding:0 24px;
+  position:relative;z-index:1;
+}
+.section-head{
+  font-family:'Unbounded',sans-serif;
+  font-size:24px;font-weight:900;color:var(--text);
+  letter-spacing:-1px;margin-bottom:32px;text-align:center;
+}
+.how-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.how-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r2);padding:24px 20px;
+}
+.how-num{
+  width:36px;height:36px;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  border-radius:10px;display:flex;align-items:center;justify-content:center;
+  font-family:'Unbounded',sans-serif;font-size:14px;font-weight:700;color:white;
+  margin-bottom:16px;
+}
+.how-title{font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px}
+.how-desc{font-size:13px;color:var(--text3);line-height:1.6}
+
+/* Футер */
+footer{
+  border-top:1px solid var(--border);padding:24px 48px;
+  display:flex;align-items:center;justify-content:space-between;
+  background:var(--surface);position:relative;z-index:1;
+}
+.footer-left{font-size:13px;color:var(--text3)}
+.footer-link{
+  font-size:13px;color:var(--text3);
+  text-decoration:none;cursor:pointer;transition:color .2s;
+}
+.footer-link:hover{color:var(--accent)}
+
+/* Адаптив */
+@media(max-width:600px){
+  header{padding:0 20px}
+  .hero{padding:48px 20px 40px}
+  .hero h1{font-size:28px}
+  .scores-row,.slides-grid,.actions-row,.how-grid,.compare-cards,.comp-grid,.compare-grid{grid-template-columns:1fr}
+  .plans-grid{grid-template-columns:1fr}
+  footer{flex-direction:column;gap:12px;padding:20px;text-align:center}
+  .tabs{width:calc(100% - 0px)}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <a class="logo" href="#">
+    <div class="logo-icon">⚡</div>
+    Питчли
+  </a>
+  <div class="header-right">
+    <div class="header-stat">
+      <span class="stat-dot"></span>
+      <span id="visitorCount">—</span>
+      <span data-ru="анализов" data-en="analyses">анализов</span>
+    </div>
+    <div class="lang-toggle">
+      <button class="lang-btn active" onclick="setLang('ru')">RU</button>
+      <button class="lang-btn" onclick="setLang('en')">EN</button>
+    </div>
+    <span class="footer-link" onclick="showPrivacy()" style="font-size:12px">🔒</span>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="hero-badge">
+    <span class="stat-dot"></span>
+    <span data-ru="ИИ-анализ · Без регистрации · 60 секунд" data-en="AI analysis · No signup · 60 seconds">ИИ-анализ · Без регистрации · 60 секунд</span>
+  </div>
+  <h1 data-ru="Превращаем идею<br>в <em>готовый питч</em>" data-en="Turn your idea<br>into a <em>ready pitch</em>">Превращаем идею<br>в <em>готовый питч</em></h1>
+  <p class="hero-sub" data-ru="Опиши идею — получи оценку рынка, анализ конкурентов, бизнес-модель и PDF за 60 секунд." data-en="Describe your idea — get market score, competitor analysis, business model and PDF in 60 seconds.">Опиши идею — получи оценку рынка, анализ конкурентов, бизнес-модель и PDF за 60 секунд.</p>
+
+  <div class="tabs" id="mainTabs">
+    <button class="tab-btn active" onclick="switchTab('analyze')" data-ru="Анализ идеи" data-en="Analyze idea">Анализ идеи</button>
+    <button class="tab-btn" onclick="switchTab('compare')" data-ru="Сравнить идеи" data-en="Compare ideas">Сравнить идеи</button>
+    <button class="tab-btn" onclick="switchTab('history')" data-ru="История" data-en="History">История</button>
+  </div>
+</section>
+
+<div class="main-wrap">
+
+  <!-- ═══ ТАБ 1: АНАЛИЗ ═══ -->
+  <div id="tab-analyze">
+    <div class="card">
+      <div class="card-top">
+        <div class="dots">
+          <div class="dot dot-r"></div>
+          <div class="dot dot-y"></div>
+          <div class="dot dot-g"></div>
+        </div>
+        <div class="card-label" id="cardLabel" data-ru="Новый анализ" data-en="New analysis">Новый анализ</div>
+      </div>
+      <div class="card-body">
+
+        <!-- Ввод -->
+        <div id="inputState">
+          <div class="input-label" data-ru="ОПИШИ СВОЮ ИДЕЮ" data-en="DESCRIBE YOUR IDEA">ОПИШИ СВОЮ ИДЕЮ</div>
+          <textarea id="ideaInput" placeholder="Идея моего проекта..." oninput="updateMeta()"></textarea>
+          <div class="input-meta">
+            <span><span id="charCount">0</span>/1000</span>
+            <span class="free-left-badge"><span data-ru="Осталось: " data-en="Left: ">Осталось: </span><span id="freeLeft">3</span></span>
+          </div>
+          <button class="analyze-btn" onclick="analyzeIdea()">
+            <span id="btnText">Проанализировать →</span>
+          </button>
+        </div>
+
+        <!-- Загрузка -->
+        <div class="loading" id="loadingState">
+          <div class="loader"></div>
+          <div class="loading-title" id="loadingTitle">Анализируем идею...</div>
+          <div class="loading-sub" id="loadingSub">Это займёт около 30 секунд</div>
+          <div class="steps-list" id="stepsList">
+            <div class="step-item active" id="s1"><span class="step-dot"></span><span>Оцениваем актуальность рынка</span></div>
+            <div class="step-item" id="s2"><span class="step-dot"></span><span>Считаем потенциал монетизации</span></div>
+            <div class="step-item" id="s3"><span class="step-dot"></span><span>Анализируем конкурентов</span></div>
+            <div class="step-item" id="s4"><span class="step-dot"></span><span>Формулируем питч и PDF</span></div>
+          </div>
+        </div>
+
+        <!-- Paywall -->
+        <div class="paywall" id="paywallState">
+          <div class="paywall-icon">🔒</div>
+          <div class="paywall-title" data-ru="Лимит исчерпан" data-en="Limit reached">Лимит исчерпан</div>
+          <div class="paywall-sub" data-ru="Ты использовал 3 бесплатных анализа. Выбери план чтобы продолжить." data-en="You've used 3 free analyses. Choose a plan to continue.">Ты использовал 3 бесплатных анализа. Выбери план чтобы продолжить.</div>
+          <div class="plans-grid">
+            <div class="plan">
+              <div class="plan-name" data-ru="Пакет попыток" data-en="Pack">Пакет попыток</div>
+              <div class="plan-price">199₽<span data-ru=" за 15" data-en=" for 15"> за 15</span></div>
+              <div class="plan-desc" data-ru="15 анализов. Без срока действия." data-en="15 analyses. No expiry.">15 анализов. Без срока действия.</div>
+              <button class="plan-cta plan-cta-secondary" onclick="buyPack()" data-ru="Купить →" data-en="Buy →">Купить →</button>
+            </div>
+            <div class="plan featured">
+              <div class="plan-tag" data-ru="ЛУЧШИЙ ВЫБОР" data-en="BEST VALUE">ЛУЧШИЙ ВЫБОР</div>
+              <div class="plan-name" data-ru="Pro подписка" data-en="Pro">Pro подписка</div>
+              <div class="plan-price">499₽<span data-ru="/мес" data-en="/mo">/мес</span></div>
+              <div class="plan-desc" data-ru="Безлимит + приоритет." data-en="Unlimited + priority.">Безлимит + приоритет.</div>
+              <button class="plan-cta plan-cta-primary" onclick="buySubscription()" data-ru="Подписаться →" data-en="Subscribe →">Подписаться →</button>
+            </div>
+          </div>
+          <div class="paywall-note" data-ru="🔧 Оплата через ЮKassa — скоро. Пиши: hello@pitchly.ru" data-en="🔧 YooKassa payment coming soon. Email: hello@pitchly.ru">🔧 Оплата через ЮKassa — скоро. Пиши: hello@pitchly.ru</div>
+        </div>
+
+        <!-- Результат -->
+        <div class="result" id="resultState">
+          <div class="result-meta">
+            <span class="result-id" id="analysisId">АНАЛИЗ #—</span>
+            <span class="idea-type" id="ideaType"></span>
+          </div>
+
+          <div class="scores-row">
+            <div class="score-card rel">
+              <div class="score-label" data-ru="АКТУАЛЬНОСТЬ" data-en="RELEVANCE">АКТУАЛЬНОСТЬ</div>
+              <div class="score-num" id="relScore">—</div>
+              <div class="score-verdict" id="relVerdict"></div>
+            </div>
+            <div class="score-card mon">
+              <div class="score-label" data-ru="МОНЕТИЗАЦИЯ" data-en="MONETIZATION">МОНЕТИЗАЦИЯ</div>
+              <div class="score-num" id="monScore">—</div>
+              <div class="score-verdict" id="monVerdict"></div>
+            </div>
+          </div>
+
+          <div class="upgrade-section" id="upgradeSection">
+            <div class="upgrade-title">⚠️ <span data-ru="Идею можно усилить" data-en="Idea needs improvement">Идею можно усилить</span></div>
+            <div class="upgrade-text" id="upgradeText"></div>
+            <div class="better-box">
+              <div class="better-label" data-ru="УЛУЧШЕННАЯ ВЕРСИЯ" data-en="IMPROVED VERSION">УЛУЧШЕННАЯ ВЕРСИЯ</div>
+              <div class="better-text" id="betterText"></div>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-header">
+              <span class="section-icon">🎯</span>
+              <span class="section-title" data-ru="ТВОЙ ПИТЧ" data-en="YOUR PITCH">ТВОЙ ПИТЧ</span>
+            </div>
+            <div class="section-text" id="pitchText"></div>
+          </div>
+
+          <div class="section">
+            <div class="section-header">
+              <span class="section-icon">💼</span>
+              <span class="section-title" data-ru="БИЗНЕС-МОДЕЛЬ" data-en="BUSINESS MODEL">БИЗНЕС-МОДЕЛЬ</span>
+            </div>
+            <div class="section-text" id="bizText"></div>
+          </div>
+
+          <div class="competitors-section">
+            <div class="section-header">
+              <span class="section-icon">🔍</span>
+              <span class="section-title" data-ru="АНАЛИЗ КОНКУРЕНТОВ" data-en="COMPETITORS">АНАЛИЗ КОНКУРЕНТОВ</span>
+            </div>
+            <div class="section-text" id="compSummary"></div>
+            <div class="comp-grid" id="compGrid"></div>
+          </div>
+
+          <div class="section">
+            <div class="section-header">
+              <span class="section-icon">📊</span>
+              <span class="section-title" data-ru="МИНИ-ПРЕЗЕНТАЦИЯ" data-en="PRESENTATION">МИНИ-ПРЕЗЕНТАЦИЯ</span>
+            </div>
+            <div class="slides-grid" id="slidesGrid"></div>
+          </div>
+
+          <div class="section">
+            <div class="section-header">
+              <span class="section-icon">🌐</span>
+              <span class="section-title" data-ru="ПОХОЖИЕ НИШИ" data-en="NICHES">ПОХОЖИЕ НИШИ</span>
+            </div>
+            <div class="tags-list" id="nichesList"></div>
+          </div>
+
+          <div class="section">
+            <div class="section-header">
+              <span class="section-icon">⚖️</span>
+              <span class="section-title" data-ru="ЮРИДИКА" data-en="LEGAL">ЮРИДИКА</span>
+            </div>
+            <div class="legal-list" id="legalList"></div>
+          </div>
+
+          <div class="actions-row">
+            <button class="btn-pdf" onclick="downloadPDF()">⬇ <span data-ru="Скачать PDF" data-en="Download PDF">Скачать PDF</span></button>
+            <button class="btn-share" onclick="shareResult()">↗ <span data-ru="Поделиться" data-en="Share">Поделиться</span></button>
+          </div>
+          <button class="btn-restart" onclick="restart()" data-ru="← Проанализировать другую идею" data-en="← Analyze another idea">← Проанализировать другую идею</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ ТАБ 2: СРАВНЕНИЕ ═══ -->
+  <div id="tab-compare" style="display:none">
+    <div class="card">
+      <div class="card-top">
+        <div class="dots">
+          <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
+        </div>
+        <div class="card-label" data-ru="Сравнение двух идей" data-en="Compare two ideas">Сравнение двух идей</div>
+      </div>
+      <div class="card-body">
+        <div id="compareInputState">
+          <div class="compare-grid">
+            <div>
+              <div class="compare-label" data-ru="ИДЕЯ А" data-en="IDEA A">ИДЕЯ А</div>
+              <textarea id="ideaA" placeholder="Первая идея..." style="min-height:100px"></textarea>
+            </div>
+            <div>
+              <div class="compare-label" data-ru="ИДЕЯ Б" data-en="IDEA B">ИДЕЯ Б</div>
+              <textarea id="ideaB" placeholder="Вторая идея..." style="min-height:100px"></textarea>
+            </div>
+          </div>
+          <button class="compare-btn" onclick="compareIdeas()" data-ru="⚡ Сравнить идеи" data-en="⚡ Compare ideas">⚡ Сравнить идеи</button>
+        </div>
+        <div class="loading" id="compareLoadingState">
+          <div class="loader"></div>
+          <div class="loading-title" data-ru="Сравниваем идеи..." data-en="Comparing ideas...">Сравниваем идеи...</div>
+          <div class="loading-sub" data-ru="Анализируем обе идеи параллельно" data-en="Analyzing both ideas in parallel">Анализируем обе идеи параллельно</div>
+        </div>
+        <div class="compare-result" id="compareResult">
+          <div class="compare-cards" id="compareCards"></div>
+          <button class="btn-restart" style="margin-top:16px" onclick="restartCompare()" data-ru="← Сравнить другие идеи" data-en="← Compare other ideas">← Сравнить другие идеи</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ ТАБ 3: ИСТОРИЯ ═══ -->
+  <div id="tab-history" style="display:none">
+    <div class="card">
+      <div class="card-top">
+        <div class="dots">
+          <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
+        </div>
+        <div class="card-label" data-ru="История анализов" data-en="Analysis history">История анализов</div>
+      </div>
+      <div class="card-body" id="historyBody">
+        <div class="history-empty" data-ru="Пока нет сохранённых анализов. Проанализируй свою первую идею!" data-en="No saved analyses yet. Analyze your first idea!">Пока нет сохранённых анализов. Проанализируй свою первую идею!</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<section class="how-section">
+  <div class="section-head" data-ru="Как это работает" data-en="How it works">Как это работает</div>
+  <div class="how-grid">
+    <div class="how-card">
+      <div class="how-num">1</div>
+      <div class="how-title" data-ru="Опиши идею" data-en="Describe idea">Опиши идею</div>
+      <div class="how-desc" data-ru="Пиши как умеешь. ИИ поймёт любой формат." data-en="Write however you want. AI understands.">Пиши как умеешь. ИИ поймёт любой формат.</div>
+    </div>
+    <div class="how-card">
+      <div class="how-num">2</div>
+      <div class="how-title" data-ru="Получи анализ" data-en="Get analysis">Получи анализ</div>
+      <div class="how-desc" data-ru="Оценка %, питч, конкуренты, ниши, юридика." data-en="Score, pitch, competitors, niches, legal.">Оценка %, питч, конкуренты, ниши, юридика.</div>
+    </div>
+    <div class="how-card">
+      <div class="how-num">3</div>
+      <div class="how-title" data-ru="Скачай PDF" data-en="Download PDF">Скачай PDF</div>
+      <div class="how-desc" data-ru="Готовая презентация для инвесторов в один клик." data-en="Ready investor presentation in one click.">Готовая презентация для инвесторов в один клик.</div>
+    </div>
+  </div>
+</section>
+
+<div class="modal-overlay" id="privacyModal">
+  <div class="modal">
+    <div class="modal-title" data-ru="Конфиденциальность" data-en="Privacy">Конфиденциальность</div>
+    <div class="modal-text" data-ru="Питчли не сохраняет твои идеи на серверах. Каждый запрос обрабатывается в реальном времени и не записывается. Мы не передаём данные третьим лицам. История анализов хранится только в твоём браузере." data-en="Pitchly does not store your ideas on servers. Each request is processed in real time and not recorded. We do not share data with third parties.">Питчли не сохраняет твои идеи на серверах. Каждый запрос обрабатывается в реальном времени и не записывается. Мы не передаём данные третьим лицам. История анализов хранится только в твоём браузере.</div>
+    <button class="modal-close" onclick="hidePrivacy()" data-ru="Понятно" data-en="Got it">Понятно</button>
+  </div>
+</div>
+
+<footer>
+  <div class="footer-left">© 2025 Питчли</div>
+  <span class="footer-link" onclick="showPrivacy()" data-ru="🔒 Данные защищены" data-en="🔒 Data protected">🔒 Данные защищены</span>
+</footer>
+
+<script>
+let lang = 'ru';
+const T = {
+  ru: {
+    placeholder: 'Идея моего проекта...',
+    btnText: 'Проанализировать →',
+    loadingTitle: 'Анализируем идею...',
+    loadingSub: 'Это займёт около 30 секунд',
+    steps: ['Оцениваем актуальность рынка','Считаем потенциал монетизации','Анализируем конкурентов','Формулируем питч и PDF'],
+    noIdea: 'Напиши свою идею',
+    errMsg: 'Ошибка. Попробуй ещё раз.',
+    shareText: r => `💡 Проверил идею на Питчли:\n\nАктуальность: ${r.relevance}%\nМонетизация: ${r.monetization}%\n\n${r.pitch}\n\n👉 pitchly.ru`,
+    pdfBy: 'Создано на Питчли · pitchly.ru',
+    slideLabel: 'СЛАЙД',
+    analyses: 'анализов',
+  },
+  en: {
+    placeholder: 'My project idea...',
+    btnText: 'Analyze →',
+    loadingTitle: 'Analyzing your idea...',
+    loadingSub: 'This will take about 30 seconds',
+    steps: ['Evaluating market relevance','Calculating monetization potential','Analyzing competitors','Crafting pitch and PDF'],
+    noIdea: 'Please describe your idea',
+    errMsg: 'Error. Please try again.',
+    shareText: r => `💡 Scored my idea on Pitchly:\n\nRelevance: ${r.relevance}%\nMonetization: ${r.monetization}%\n\n${r.pitch}\n\n👉 pitchly.ru`,
+    pdfBy: 'Created on Pitchly · pitchly.ru',
+    slideLabel: 'SLIDE',
+    analyses: 'analyses',
+  }
+};
+
+// ── ЯЗЫК ──
+function setLang(l) {
+  lang = l;
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector(`.lang-btn[onclick="setLang('${l}')"]`).classList.add('active');
+  document.querySelectorAll('[data-ru]').forEach(el => {
+    const txt = el.getAttribute(`data-${l}`);
+    if (!txt) return;
+    if (el.innerHTML.includes('<br') || el.innerHTML.includes('<em')) el.innerHTML = txt;
+    else el.textContent = txt;
+  });
+  document.getElementById('ideaInput').placeholder = T[l].placeholder;
+  document.getElementById('btnText').textContent = T[l].btnText;
+  updateMeta();
+  renderHistory();
+}
+
+// ── ТАБЫ ──
+function switchTab(tab) {
+  ['analyze','compare','history'].forEach(t => {
+    document.getElementById(`tab-${t}`).style.display = t === tab ? 'block' : 'none';
+  });
+  document.querySelectorAll('.tab-btn').forEach((b,i) => {
+    b.classList.toggle('active', ['analyze','compare','history'][i] === tab);
+  });
+  if (tab === 'history') renderHistory();
+}
+
+// ── ЛИМИТЫ ──
+const FREE_LIMIT = 3;
+function getUsage() {
+  try { return JSON.parse(localStorage.getItem('pitchly_v3') || '{}'); }
+  catch { return {}; }
+}
+function saveUsage(u) { localStorage.setItem('pitchly_v3', JSON.stringify(u)); }
+function getRemaining() {
+  const u = getUsage();
+  if (u.pro) return 999;
+  return Math.max(0, FREE_LIMIT + (u.paid||0) - (u.count||0));
+}
+function updateMeta() {
+  document.getElementById('charCount').textContent = document.getElementById('ideaInput').value.length;
+  const r = getRemaining();
+  document.getElementById('freeLeft').textContent = r >= 999 ? '∞' : r;
+}
+
+// ── ID ПОЛЬЗОВАТЕЛЯ ──
+function getUID() {
+  let uid = localStorage.getItem('pitchly_uid');
+  if (!uid) {
+    uid = 'ABCDEFGHJKLMNPQRSTUVWXYZ'[Math.floor(Math.random()*24)] + Math.floor(1000+Math.random()*8999);
+    localStorage.setItem('pitchly_uid', uid);
+  }
+  return uid;
+}
+function getAnalysisNum() {
+  let n = parseInt(localStorage.getItem('pitchly_anum')||'0') + 1;
+  localStorage.setItem('pitchly_anum', String(n));
+  return 4200 + n;
+}
+
+// ── ТИП ИДЕИ ──
+function getIdeaType(idea, rel) {
+  const t = (idea||'').toLowerCase();
+  if (/игр|музык|арт|дизайн|контент|медиа|стрим|творч/.test(t)) return {cls:'type-d',icon:'🎨',ru:'Творец',en:'Creator'};
+  if (/люди|сообществ|социал|помощ|волонт/.test(t)) return {cls:'type-s',icon:'🤝',ru:'Объединитель',en:'Connector'};
+  if (/бизнес|корпорат|b2b|автомат|оптимиз/.test(t)) return {cls:'type-b',icon:'⚙️',ru:'Строитель',en:'Builder'};
+  if (rel >= 70) return {cls:'type-v',icon:'🔭',ru:'Визионер',en:'Visioner'};
+  return {cls:'type-b',icon:'🛠',ru:'Строитель',en:'Builder'};
+}
+
+// ── ЗАГРУЗКА ──
+function startLoading(prefix='') {
+  const t = T[lang];
+  document.getElementById(`${prefix}loadingTitle`||'loadingTitle').textContent = t.loadingTitle;
+  if (!prefix) {
+    document.getElementById('loadingSub').textContent = t.loadingSub;
+    const ids = ['s1','s2','s3','s4'];
+    ids.forEach((id,i) => {
+      const el = document.getElementById(id);
+      el.querySelector('span:last-child').textContent = t.steps[i];
+      el.classList.remove('active');
+    });
+    ids[0] && document.getElementById('s1').classList.add('active');
+    let i = 0;
+    return setInterval(() => {
+      ids.forEach(id => document.getElementById(id).classList.remove('active'));
+      i = (i+1) % ids.length;
+      document.getElementById(ids[i]).classList.add('active');
+    }, 2500);
+  }
+  return null;
+}
+
+// ── АНАЛИЗ ──
+async function analyzeIdea() {
+  const idea = document.getElementById('ideaInput').value.trim();
+  if (!idea) return alert(T[lang].noIdea);
+  if (getRemaining() <= 0) {
+    document.getElementById('inputState').style.display = 'none';
+    document.getElementById('paywallState').classList.add('show');
+    return;
+  }
+  document.getElementById('inputState').style.display = 'none';
+  document.getElementById('loadingState').classList.add('show');
+  document.getElementById('resultState').classList.remove('show');
+  document.getElementById('paywallState').classList.remove('show');
+  const interval = startLoading();
+  try {
+    const res = await fetch('/api/analyze', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({idea, lang})
+    });
+    clearInterval(interval);
+    if (!res.ok) throw new Error('Server error');
+    const r = await res.json();
+    if (r.error) throw new Error(r.error);
+    const u = getUsage(); u.count = (u.count||0)+1; saveUsage(u);
+    window._result = r; window._idea = idea;
+    saveToHistory(idea, r);
+    showResult(r);
+  } catch(e) {
+    clearInterval(interval);
+    document.getElementById('loadingState').classList.remove('show');
+    document.getElementById('inputState').style.display = 'block';
+    alert(T[lang].errMsg + ' ' + e.message);
+  }
+}
+
+// ── ПОКАЗ РЕЗУЛЬТАТА ──
+function showResult(r) {
+  document.getElementById('loadingState').classList.remove('show');
+  animNum('relScore', r.relevance, '%');
+  animNum('monScore', r.monetization, '%');
+  document.getElementById('relVerdict').textContent = r.relevanceVerdict||'';
+  document.getElementById('monVerdict').textContent = r.monetizationVerdict||'';
+  document.getElementById('pitchText').textContent = r.pitch||'';
+  document.getElementById('bizText').textContent = r.bizModel||'';
+
+  const aN = getAnalysisNum(); window._aN = aN;
+  document.getElementById('analysisId').textContent = (lang==='ru'?'АНАЛИЗ #':'ANALYSIS #') + aN;
+
+  const type = getIdeaType(window._idea, r.relevance);
+  const typeEl = document.getElementById('ideaType');
+  typeEl.className = 'idea-type ' + type.cls;
+  typeEl.textContent = type.icon + ' ' + (lang==='ru'?type.ru:type.en);
+
+  // Улучшение
+  const upSec = document.getElementById('upgradeSection');
+  if (r.upgradeNeeded && r.upgradeText) {
+    document.getElementById('upgradeText').textContent = r.upgradeText;
+    document.getElementById('betterText').textContent = r.betterIdea||'';
+    upSec.classList.add('show');
+  } else upSec.classList.remove('show');
+
+  // Конкуренты
+  document.getElementById('compSummary').textContent = r.competitorsSummary || (lang==='ru'?'Основные игроки на рынке:':'Key market players:');
+  const cg = document.getElementById('compGrid'); cg.innerHTML = '';
+  (r.competitors||[]).forEach(c => {
+    const d = document.createElement('div'); d.className = 'comp-card';
+    d.innerHTML = `<div class="comp-name">${c.name}</div><div class="comp-desc">${c.desc}</div>`;
+    cg.appendChild(d);
+  });
+
+  // Слайды
+  const sg = document.getElementById('slidesGrid'); sg.innerHTML = '';
+  const lbl = T[lang].slideLabel;
+  (r.slides||[]).forEach((s,i) => {
+    const d = document.createElement('div'); d.className = 'slide';
+    d.innerHTML = `<div class="slide-num">${lbl} ${i+1}</div><div class="slide-title">${s.title}</div><div class="slide-text">${s.content}</div>`;
+    sg.appendChild(d);
+  });
+
+  // Ниши
+  const nl = document.getElementById('nichesList'); nl.innerHTML = '';
+  (r.niches||[]).forEach(n => {
+    const d = document.createElement('span'); d.className = 'tag'; d.textContent = n; nl.appendChild(d);
+  });
+
+  // Юридика
+  const ll = document.getElementById('legalList'); ll.innerHTML = '';
+  (r.legal||[]).forEach(l => {
+    const d = document.createElement('div'); d.className = 'legal-item';
+    d.innerHTML = `<span class="legal-icon">⚖️</span><span>${l}</span>`; ll.appendChild(d);
+  });
+
+  document.getElementById('resultState').classList.add('show');
+}
+
+function animNum(id, target, suffix) {
+  const el = document.getElementById(id); let cur = 0;
+  const step = target/40;
+  const t = setInterval(() => {
+    cur = Math.min(cur+step, target);
+    el.textContent = Math.round(cur) + suffix;
+    if (cur >= target) clearInterval(t);
+  }, 20);
+}
+
+// ── ИСТОРИЯ ──
+function saveToHistory(idea, r) {
+  let hist = JSON.parse(localStorage.getItem('pitchly_history')||'[]');
+  hist.unshift({
+    idea: idea.substring(0,100),
+    relevance: r.relevance,
+    monetization: r.monetization,
+    pitch: r.pitch,
+    date: new Date().toLocaleDateString('ru-RU'),
+    full: r
+  });
+  if (hist.length > 20) hist = hist.slice(0,20);
+  localStorage.setItem('pitchly_history', JSON.stringify(hist));
+}
+
+function renderHistory() {
+  const body = document.getElementById('historyBody');
+  const hist = JSON.parse(localStorage.getItem('pitchly_history')||'[]');
+  if (!hist.length) {
+    body.innerHTML = `<div class="history-empty">${lang==='ru'?'Пока нет сохранённых анализов. Проанализируй свою первую идею!':'No saved analyses yet. Analyze your first idea!'}</div>`;
+    return;
+  }
+  body.innerHTML = `<div class="history-list">${hist.map((h,i) => `
+    <div class="history-item" onclick="loadFromHistory(${i})">
+      <div>
+        <div class="history-idea">${h.idea}</div>
+        <div class="history-meta"><span>${h.date}</span></div>
+      </div>
+      <div class="history-scores">
+        <span class="h-score rel">${h.relevance}%</span>
+        <span class="h-score mon">${h.monetization}%</span>
+      </div>
+    </div>
+  `).join('')}</div>`;
+}
+
+function loadFromHistory(i) {
+  const hist = JSON.parse(localStorage.getItem('pitchly_history')||'[]');
+  const h = hist[i];
+  if (!h) return;
+  window._result = h.full;
+  window._idea = h.idea;
+  switchTab('analyze');
+  document.getElementById('inputState').style.display = 'none';
+  showResult(h.full);
+}
+
+// ── СРАВНЕНИЕ ──
+async function compareIdeas() {
+  const a = document.getElementById('ideaA').value.trim();
+  const b = document.getElementById('ideaB').value.trim();
+  if (!a || !b) return alert(lang==='ru'?'Введи обе идеи':'Enter both ideas');
+  if (getRemaining() <= 0) {
+    document.getElementById('compareInputState').style.display = 'none';
+    return alert(lang==='ru'?'Лимит исчерпан. Перейди на вкладку Анализ чтобы купить план.':'Limit reached. Go to Analyze tab to buy a plan.');
+  }
+
+  document.getElementById('compareInputState').style.display = 'none';
+  document.getElementById('compareLoadingState').classList.add('show');
+
+  try {
+    const [ra, rb] = await Promise.all([
+      fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({idea:a,lang})}).then(r=>r.json()),
+      fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({idea:b,lang})}).then(r=>r.json())
+    ]);
+    const u = getUsage(); u.count = (u.count||0)+2; saveUsage(u);
+    document.getElementById('compareLoadingState').classList.remove('show');
+    showCompareResult(a, b, ra, rb);
+  } catch(e) {
+    document.getElementById('compareLoadingState').classList.remove('show');
+    document.getElementById('compareInputState').style.display = 'block';
+    alert(T[lang].errMsg);
+  }
+}
+
+function showCompareResult(a, b, ra, rb) {
+  const winnerA = (ra.relevance + ra.monetization) >= (rb.relevance + rb.monetization);
+  const cards = document.getElementById('compareCards');
+  cards.innerHTML = [
+    {idea: a, r: ra, win: winnerA},
+    {idea: b, r: rb, win: !winnerA}
+  ].map(({idea,r,win}) => `
+    <div class="compare-card${win?' winner':''}">
+      ${win ? `<div class="winner-badge">🏆 ${lang==='ru'?'Победитель':'Winner'}</div>` : ''}
+      <div class="compare-idea-title">${idea.substring(0,80)}</div>
+      <div class="compare-score-row">
+        <div class="c-score-card">
+          <div class="c-score-label">${lang==='ru'?'АКТУАЛЬНОСТЬ':'RELEVANCE'}</div>
+          <div class="c-score-val" style="color:var(--accent)">${r.relevance}%</div>
+        </div>
+        <div class="c-score-card">
+          <div class="c-score-label">${lang==='ru'?'МОНЕТИЗАЦИЯ':'MONETIZATION'}</div>
+          <div class="c-score-val" style="color:var(--accent2)">${r.monetization}%</div>
+        </div>
+      </div>
+      <div class="c-pitch">${(r.pitch||'').substring(0,200)}</div>
+    </div>
+  `).join('');
+  document.getElementById('compareResult').classList.add('show');
+}
+
+function restartCompare() {
+  document.getElementById('compareResult').classList.remove('show');
+  document.getElementById('compareInputState').style.display = 'block';
+  document.getElementById('ideaA').value = '';
+  document.getElementById('ideaB').value = '';
+}
+
+// ── PAYWALL ──
+function buyPack() {
+  alert(lang==='ru'?'🔧 Оплата в разработке. Напиши на hello@pitchly.ru':'🔧 Payment in development. Email hello@pitchly.ru');
+}
+function buySubscription() {
+  alert(lang==='ru'?'🔧 Подписка в разработке. Напиши на hello@pitchly.ru':'🔧 Subscription in development. Email hello@pitchly.ru');
+}
+
+// ── RESTART ──
+function restart() {
+  ['resultState','paywallState','loadingState'].forEach(id => document.getElementById(id).classList.remove('show'));
+  document.getElementById('inputState').style.display = 'block';
+  document.getElementById('ideaInput').value = '';
+  updateMeta();
+}
+
+// ── ПОДЕЛИТЬСЯ ──
+function shareResult() {
+  const r = window._result; if(!r) return;
+  const text = T[lang].shareText(r);
+  if (navigator.share) navigator.share({text});
+  else navigator.clipboard.writeText(text).then(() => alert(lang==='ru'?'✅ Скопировано!':'✅ Copied!'));
+}
+
+// ── МОДАЛ ──
+function showPrivacy() { document.getElementById('privacyModal').classList.add('show'); }
+function hidePrivacy() { document.getElementById('privacyModal').classList.remove('show'); }
+
+// ── СЧЁТЧИК ──
+(function() {
+  const el = document.getElementById('visitorCount');
+  const BASE = 4847;
+  const KEY = 'pitchly_visits';
+  let n = parseInt(localStorage.getItem(KEY)||'0');
+  if (n < BASE) n = BASE;
+  n++;
+  localStorage.setItem(KEY, String(n));
+  let cur = Math.max(BASE, n-30);
+  const fmt = v => v >= 1000 ? (v/1000).toFixed(1).replace('.',',')+' K' : String(v);
+  const t = setInterval(() => {
+    cur = Math.min(cur+1, n);
+    el.textContent = fmt(cur);
+    if (cur >= n) clearInterval(t);
+  }, 40);
+})();
+
+// ── PDF ──
+async function downloadPDF() {
+  const r = window._result; if(!r) return;
+  const isRu = lang === 'ru';
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
+  const S = 3, MM = 3.7795;
+  const PW = Math.round(297*MM*S), PH = Math.round(210*MM*S), M = Math.round(12*MM*S);
+
+  const mkC = () => {
+    const c = document.createElement('canvas'); c.width = PW; c.height = PH;
+    const x = c.getContext('2d');
+    x.fillStyle = '#03060f'; x.fillRect(0,0,PW,PH);
+    x.fillStyle = 'rgba(79,139,255,0.04)';
+    for(let gx=20*S;gx<PW;gx+=50*S) for(let gy=20*S;gy<PH;gy+=50*S) { x.beginPath(); x.arc(gx,gy,1.5*S,0,Math.PI*2); x.fill(); }
+    return {c,x};
+  };
+
+  const wrap = (x,text,maxPx) => {
+    const words = String(text||'').split(' ');
+    const lines = []; let line = '';
+    for(const w of words) { const t = line?line+' '+w:w; if(x.measureText(t).width>maxPx&&line){lines.push(line);line=w;}else line=t; }
+    if(line) lines.push(line);
+    return lines;
+  };
+
+  const foot = (x,pg,tot) => {
+    x.fillStyle='rgba(255,255,255,0.04)'; x.fillRect(0,PH-28*S,PW,28*S);
+    x.font=`${8*S}px Arial`; x.fillStyle='#1a2540';
+    x.fillText(T[lang].pdfBy, M, PH-9*S);
+    x.textAlign='right'; x.fillText(pg+' / '+tot, PW-M, PH-9*S); x.textAlign='left';
+  };
+
+  const push = (c,first) => { if(!first) doc.addPage(); doc.addImage(c.toDataURL('image/jpeg',.95),'JPEG',0,0,297,210); };
+
+  // Страница 1
+  const {c:c1,x:x1} = mkC();
+  const lg = x1.createLinearGradient(0,0,330*S,PH);
+  lg.addColorStop(0,'#080e1c'); lg.addColorStop(1,'#03060f');
+  x1.fillStyle=lg; x1.fillRect(0,0,330*S,PH);
+  const vg = x1.createLinearGradient(0,0,0,PH);
+  vg.addColorStop(0,'#4f8bff'); vg.addColorStop(.5,'#00d4aa'); vg.addColorStop(1,'#4f8bff');
+  x1.fillStyle=vg; x1.fillRect(330*S,0,3*S,PH);
+  x1.font=`900 ${26*S}px Arial`; x1.fillStyle='#f0f4ff'; x1.fillText('Питчли', M, 55*S);
+  x1.font=`${10*S}px Arial`; x1.fillStyle='#4f8bff'; x1.fillText(isRu?'Анализ бизнес-идеи':'Business Idea Analysis', M, 74*S);
+  const drawArc = (cx,cy,val,color) => {
+    const R=46*S,LW=7*S;
+    x1.beginPath(); x1.arc(cx,cy,R,0,Math.PI*2); x1.strokeStyle='rgba(255,255,255,0.05)'; x1.lineWidth=LW; x1.stroke();
+    x1.beginPath(); x1.arc(cx,cy,R,-Math.PI/2,-Math.PI/2+(val/100)*Math.PI*2); x1.strokeStyle=color; x1.lineWidth=LW; x1.lineCap='round'; x1.stroke();
+    x1.font=`900 ${18*S}px Arial`; x1.fillStyle=color; x1.textAlign='center'; x1.fillText(val+'%',cx,cy+6*S); x1.textAlign='left';
+  };
+  drawArc(95*S,190*S,r.relevance,'#4f8bff');
+  drawArc(235*S,190*S,r.monetization,'#00d4aa');
+  x1.font=`700 ${7*S}px Arial`; x1.fillStyle='#2a3a55'; x1.textAlign='center';
+  x1.fillText(isRu?'АКТУАЛЬНОСТЬ':'RELEVANCE',95*S,245*S);
+  x1.fillText(isRu?'МОНЕТИЗАЦИЯ':'MONETIZATION',235*S,245*S); x1.textAlign='left';
+  const RX=346*S, RW=PW-RX-M;
+  x1.font=`900 ${20*S}px Arial`; x1.fillStyle='#f0f4ff';
+  wrap(x1,window._idea||'',RW).slice(0,2).forEach((l,i)=>x1.fillText(l,RX,70*S+i*27*S));
+  let ry=70*S+Math.min(wrap(x1,window._idea||'',RW).length,2)*27*S+18*S;
+  x1.fillStyle='rgba(79,139,255,0.2)'; x1.fillRect(RX,ry,RW,1*S); ry+=14*S;
+  x1.font=`700 ${7*S}px Arial`; x1.fillStyle='#4f8bff'; x1.fillText(isRu?'ПИТЧ':'PITCH',RX,ry); ry+=12*S;
+  x1.font=`${11*S}px Arial`; x1.fillStyle='#8899bb';
+  wrap(x1,r.pitch||'',RW).slice(0,4).forEach((l,i)=>x1.fillText(l,RX,ry+i*16*S));
+  ry+=Math.min(wrap(x1,r.pitch||'',RW).length,4)*16*S+16*S;
+  x1.fillStyle='rgba(0,212,170,0.15)'; x1.fillRect(RX,ry,RW,1*S); ry+=14*S;
+  x1.font=`700 ${7*S}px Arial`; x1.fillStyle='#00d4aa'; x1.fillText(isRu?'БИЗНЕС-МОДЕЛЬ':'BUSINESS MODEL',RX,ry); ry+=12*S;
+  x1.font=`${11*S}px Arial`; x1.fillStyle='#8899bb';
+  wrap(x1,r.bizModel||'',RW).slice(0,4).forEach((l,i)=>x1.fillText(l,RX,ry+i*16*S));
+  foot(x1,1,2); push(c1,true);
+
+  // Страница 2
+  const {c:c2,x:x2} = mkC();
+  const hg = x2.createLinearGradient(0,0,PW,0);
+  hg.addColorStop(0,'rgba(79,139,255,0.3)'); hg.addColorStop(1,'rgba(0,212,170,0.1)');
+  x2.fillStyle=hg; x2.fillRect(0,0,PW,44*S);
+  x2.font=`900 ${11*S}px Arial`; x2.fillStyle='#f0f4ff'; x2.fillText(isRu?'МИНИ-ПРЕЗЕНТАЦИЯ':'PRESENTATION',M,28*S);
+  const slides = r.slides||[];
+  const COLS=5,GAP=7*S,TOP=52*S,FTR=30*S;
+  const SW=(PW-M*2-GAP*(COLS-1))/COLS, SH=PH-TOP-FTR-8*S;
+  const COLORS=['#4f8bff','#00d4aa','#ff6b35','#a78bfa','#ffd166'];
+  slides.slice(0,5).forEach((slide,idx) => {
+    const ac=COLORS[idx], sx=M+idx*(SW+GAP), sy=TOP;
+    x2.fillStyle='#080e1c'; x2.beginPath(); x2.roundRect(sx,sy,SW,SH,6*S); x2.fill();
+    const cg=x2.createLinearGradient(sx,sy,sx+SW,sy);
+    cg.addColorStop(0,ac+'ee'); cg.addColorStop(1,ac+'55');
+    x2.fillStyle=cg; x2.beginPath(); x2.roundRect(sx,sy,SW,24*S,[6*S,6*S,0,0]); x2.fill();
+    x2.font=`700 ${8*S}px Arial`; x2.fillStyle='#fff'; x2.fillText(slide.title.toUpperCase(),sx+7*S,sy+16*S);
+    x2.fillStyle='rgba(255,255,255,0.04)'; x2.fillRect(sx+7*S,sy+28*S,SW-14*S,1*S);
+    x2.font=`${9*S}px Arial`;
+    wrap(x2,slide.content,SW-14*S).slice(0,10).forEach((l,i) => {
+      x2.fillStyle=i===0?'#c8daf0':'#3a5070'; x2.fillText(l,sx+7*S,sy+42*S+i*13*S);
+    });
+  });
+  foot(x2,2,2); push(c2,false);
+  doc.save('pitchli-analiz.pdf');
+}
+
+updateMeta();
+</script>
+</body>
+</html>
